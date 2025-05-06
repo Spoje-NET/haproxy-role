@@ -1,31 +1,59 @@
-Role Name
-=========
+HAProxy Role
+============
 
-A brief description of the role goes here.
+This Ansible role is designed to install, configure, and manage HAProxy, a high-performance TCP/HTTP load balancer. It provides flexibility to define custom configurations and ensures HAProxy is set up optimally for your environment.
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+- Ansible 2.9 or higher.
+- The target system should be a Linux-based operating system.
+- Ensure the `haproxy` package is available in the system's package manager or provide a custom source.
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+The following variables can be customized to suit your needs:
+
+- `haproxy_global_config`: A dictionary defining global HAProxy settings (e.g., `log`, `maxconn`, etc.).
+- `haproxy_defaults_config`: A dictionary defining default HAProxy settings (e.g., `timeout`, `retries`, etc.).
+- `haproxy_frontends`: A list of frontend configurations, including ports and ACLs.
+- `haproxy_backends`: A list of backend configurations, including servers and load-balancing algorithms.
+- `haproxy_service_state`: Desired state of the HAProxy service (`started`, `stopped`, etc.).
+
+For a full list of variables, refer to `defaults/main.yml` and `vars/main.yml`.
 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+This role does not have any external dependencies. However, ensure that the target system meets the requirements mentioned above.
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+Here is an example of how to use this role:
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+```yaml
+- hosts: load_balancers
+  become: yes
+  roles:
+    - role: spojenet.haproxy
+      haproxy_global_config:
+        log: "/dev/log local0"
+        maxconn: 2048
+      haproxy_frontends:
+        - name: http_front
+          bind: "*:80"
+          default_backend: web_servers
+      haproxy_backends:
+        - name: web_servers
+          servers:
+            - name: domain.com
+              address: 192.168.1.10:8919
+              ssl: false
+            - name: www.domain.com
+              address: https://domain.com
+```
 
 License
 -------
