@@ -1,0 +1,32 @@
+---
+
+- name: Disable /etc/nginx/sites-available/default
+  ansible.builtin.file:
+    path: /etc/nginx/sites-available/default
+    state: absent
+
+- name: Ensure Nginx is not using port 80
+  ansible.builtin.lineinfile:
+    path: /etc/nginx/nginx.conf
+    regexp: 'listen\s+80;'
+    state: absent
+  notify: Restart Nginx
+- name: Ensure Nginx is not using port 80 in sites-enabled
+  ansible.builtin.find:
+    paths: /etc/nginx/sites-enabled
+    patterns: '*.conf'
+  register: nginx_sites
+
+- name: Remove port 80 from sites-enabled configurations
+  ansible.builtin.lineinfile:
+    path: "{{ item.path }}"
+    regexp: 'listen\s+80;'
+    state: absent
+  with_items: "{{ nginx_sites.files }}"
+  notify: Restart Nginx
+
+- name: Restart Nginx
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+  when: nginx_sites.matched > 0

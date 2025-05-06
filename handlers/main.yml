@@ -1,3 +1,21 @@
 #SPDX-License-Identifier: MIT-0
 ---
-# handlers file for spojenet/haproxy
+- name: Restart rsyslog
+  ansible.builtin.service:
+    name: rsyslog
+    state: restarted
+
+- name: Restart haproxy
+  ansible.builtin.service:
+    name: haproxy
+    state: restarted
+
+- name: Restart apache
+  ansible.builtin.service:
+    name: apache2
+    state: restarted
+
+- name: Restart Nginx
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
