@@ -1,0 +1,12 @@
+---
+- name: Debug existing certificates
+  ansible.builtin.debug:
+    msg: "{{ certbot_data.certificates | default('No certificates data available') }}"
+
+- name: Debug Certbot Renew Output
+  ansible.builtin.debug:
+    msg: "{{ certbot_renew_result.stdout_lines | default([]) + certbot_renew_result.stderr_lines | default([]) }}"
+
+- name: Debug list of renewed certificates
+  ansible.builtin.debug:
+    msg: "Successfully renewed certificates: {{ renewed_certificates | default('No renewed certificates') }}"

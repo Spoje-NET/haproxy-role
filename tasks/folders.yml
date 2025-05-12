@@ -1,0 +1,14 @@
+---
+- name: Prepare Fullchains directory
+  ansible.builtin.file:
+    path: /etc/haproxy/ssl/
+    state: directory
+    mode: '0755'
+
+- name: Ensure ssl haproxy directory
+  ansible.builtin.file:
+    path: /etc/haproxy/ssl/
+    state: directory
+    mode: '0755'
+    owner: haproxy
+    group: haproxy

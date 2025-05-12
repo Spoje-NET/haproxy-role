@@ -1,0 +1,33 @@
+---
+- name: Extract certificate names from haproxy backend servers
+  ansible.builtin.set_fact:
+    haproxy_cert_names: "{{ haproxy_backend_servers | map(attribute='name') | list }}"
+
+- name: Find certificates to remove
+  ansible.builtin.set_fact:
+    certs_to_remove: "{{ certbot_data.certificates | rejectattr('name', 'in', haproxy_cert_names) | map(attribute='name') | list }}"
+
+- name: Debug certificates to remove
+  ansible.builtin.debug:
+    msg: "Certificates to remove: {{ certs_to_remove }}"
+
+- name: Remove unused certificates
+  ansible.builtin.file:
+    path: "/etc/letsencrypt/live/{{ item }}"
+    state: absent
+  with_items: "{{ certs_to_remove }}"
+  when: certs_to_remove | length > 0
+
+- name: Remove unused archive directories
+  ansible.builtin.file:
+    path: "/etc/letsencrypt/archive/{{ item }}"
+    state: absent
+  with_items: "{{ certs_to_remove }}"
+  when: certs_to_remove | length > 0
+
+- name: Remove unused renewal configuration files
+  ansible.builtin.file:
+    path: "/etc/letsencrypt/renewal/{{ item }}.conf"
+    state: absent
+  with_items: "{{ certs_to_remove }}"
+  when: certs_to_remove | length > 0

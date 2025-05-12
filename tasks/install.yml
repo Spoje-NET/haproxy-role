@@ -1,0 +1,40 @@
+---
+- name: Ensure HAProxy & Apache is installed.
+  ansible.builtin.package:
+    name: ['python3-zope.interface', 'haproxy', 'apache2', 'certbot-haproxy']
+    update_cache: true
+    state: present
+
+- name: Ensure Certbot is installed
+  ansible.builtin.package:
+    name: certbot
+    state: present
+
+- name: Include nginx tasks
+  ansible.builtin.include_tasks:
+    file: nginx.yml
+
+- name: Handle certificates first
+  ansible.builtin.include_role:
+    name: 'geerlingguy.certbot'
+
+- name: Disable Apache Listen on port 80
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/ports.conf
+    state: absent
+    line: Listen 80
+
+- name: Enable Apache Listen on port 8080
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/ports.conf
+    state: present
+    line: Listen 8080
+
+- name: Update virtualhost for port 8080
+  ansible.builtin.lineinfile:
+    path: /etc/apache2/sites-available/000-default.conf
+    regexp: '^<VirtualHost \*:80>'
+    state: present
+    line: '<VirtualHost *:8080>'
+    firstmatch: true
+  notify: Restart apache

@@ -1,0 +1,40 @@
+---
+
+- name: Retrieve Certbot certificates using local module
+  certbot_certificates:
+  register: certbot_data
+
+- name: Debug Certbot certificates
+  ansible.builtin.debug:
+    msg: "{{ certbot_data.certificates }}"
+
+- name: Include cleanup tasks
+  ansible.builtin.include_tasks: cleanup.yml
+
+
+- name: Find certificates to renew
+  ansible.builtin.set_fact:
+    certs_to_renew: >-
+      {{
+        certbot_data.certificates
+        | selectattr('days_until_expiration', 'lt', 30)
+        | map(attribute='name')
+        | list
+      }}
+
+- name: Debug certificates to renew
+  ansible.builtin.debug:
+    msg: "Certificates to renew: {{ certs_to_renew }}"
+
+- name: Renew certificates close to expiration
+  ansible.builtin.command: >
+    certbot renew --cert-name {{ item }}
+    --non-interactive --quiet --deploy-hook /usr/bin/certbot-haproxy-deploy
+  with_items: "{{ certs_to_renew }}"
+  register: certbot_renew_result
+  changed_when: true
+  ignore_errors: true
+
+- name: Debug Certbot Renew Output
+  ansible.builtin.debug:
+    msg: "{{ certbot_renew_result.stdout_lines | default([]) + certbot_renew_result.stderr_lines | default([]) }}"
