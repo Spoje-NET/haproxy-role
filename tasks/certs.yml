@@ -38,3 +38,25 @@
 - name: Debug Certbot Renew Output
   ansible.builtin.debug:
     msg: "{{ certbot_renew_result.stdout_lines | default([]) + certbot_renew_result.stderr_lines | default([]) }}"
+
+- name: Check if FQDN certificate exists for fallback
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ ansible_fqdn }}/fullchain.pem"
+  register: fqdn_cert_file_status
+  changed_when: false
+  check_mode: false
+
+- name: Create fallback certificate for HAProxy
+  ansible.builtin.command: >
+    cat /etc/letsencrypt/live/{{ ansible_fqdn }}/fullchain.pem
+    /etc/letsencrypt/live/{{ ansible_fqdn }}/privkey.pem
+    > /etc/haproxy/ssl/__fallback.pem
+  when: fqdn_cert_file_status.stat.exists
+
+- name: Set permissions for fallback certificate
+  ansible.builtin.file:
+    path: /etc/haproxy/ssl/__fallback.pem
+    owner: haproxy
+    group: haproxy
+    mode: '0600'
+  when: fqdn_cert_file_status.stat.exists

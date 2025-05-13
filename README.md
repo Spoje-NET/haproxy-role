@@ -18,7 +18,12 @@ The following variables can be customized to suit your needs:
 - `haproxy_global_config`: A dictionary defining global HAProxy settings (e.g., `log`, `maxconn`, etc.).
 - `haproxy_defaults_config`: A dictionary defining default HAProxy settings (e.g., `timeout`, `retries`, etc.).
 - `haproxy_frontends`: A list of frontend configurations, including ports and ACLs.
-- `haproxy_backends`: A list of backend configurations, including servers and load-balancing algorithms.
+- `haproxy_backends`: A list of backend configurations, including servers and load-balancing algorithms. Each backend server can include:
+  - `name`: The name of the backend server.
+  - `address`: The address of the backend server (e.g., `10.11.56.151:8080`).
+  - `httpchk` (optional): The HTTP path to check for health monitoring (e.g., `/api/json`).
+  - `expect` (optional): The expected HTTP status code for health checks (e.g., `200`).
+  - `ssl`: Whether SSL is enabled for the backend server (`true` or `false`).
 - `haproxy_service_state`: Desired state of the HAProxy service (`started`, `stopped`, etc.).
 
 For a full list of variables, refer to `defaults/main.yml` and `vars/main.yml`.
@@ -48,8 +53,10 @@ Here is an example of how to use this role:
       haproxy_backends:
         - name: web_servers
           servers:
-            - name: domain.com
-              address: 192.168.1.10:8919
+            - name: jenkins.proxy.spojenet.cz
+              address: 10.11.56.151:8080
+              httpchk: /api/json
+              expect: 200
               ssl: false
             - name: www.domain.com
               address: https://domain.com

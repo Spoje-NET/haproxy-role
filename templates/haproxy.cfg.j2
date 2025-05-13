@@ -84,8 +84,16 @@ backend {{ backend.name | replace('.', '_') }}
     mode http
     balance roundrobin
     option forwardfor
+    {% if backend.httpchk is defined %}
+    option httpchk GET {{ backend.httpchk }}
+    http-check send meth GET uri {{ backend.httpchk }} ver HTTP/1.1 hdr Host {{ backend.name }}
+    {% else %}
     option httpchk GET /
     http-check send meth GET uri / ver HTTP/1.1 hdr Host {{ backend.name }}
+    {% endif %}
+    {% if backend.expect is defined %}
+    http-check expect status {{ backend.expect }}
+    {% endif %}
     cookie SERVERID insert indirect
     server {{ backend.name | replace('.', '_') }} {{ backend.address }}{% if backend.ssl == true %} ssl verify none{% endif %} check
 {% endif %}
