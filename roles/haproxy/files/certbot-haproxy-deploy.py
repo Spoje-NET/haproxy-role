@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+import pwd
+import grp
+import tempfile
+
+lineage = os.environ.get('RENEWED_LINEAGE')
+
+if not lineage:
+    sys.exit()
+
+m = re.match(r'.*/live/(.+)$', lineage)
+if not m:
+    sys.exit(1)
+
+domain = m.group(1)
+deploy_dir = "/etc/haproxy/ssl"
+deploy_path = f"{deploy_dir}/{domain}.pem"
+
+# Ensure target directory exists
+os.makedirs(deploy_dir, exist_ok=True)
+
+source_key = os.path.join(lineage, "privkey.pem")
+source_chain = os.path.join(lineage, "fullchain.pem")
+
+# Read haproxy user/group from config
+haproxy_cfg_path = "/etc/haproxy/haproxy.cfg"
+user = group = None
+try:
+    with open(haproxy_cfg_path, 'r') as cfg:
+        for line in cfg:
+            s = line.strip()
+            if s.startswith('user '):
+                user = s.split()[1]
+            elif s.startswith('group '):
+                group = s.split()[1]
+            if user and group:
+                break
+except Exception as e:
+    print(f"Error reading HAProxy config: {e}", file=sys.stderr)
+    sys.exit(1)
+
+if not user or not group:
+    print("User or group not found in HAProxy config", file=sys.stderr)
+    sys.exit(1)
+
+try:
+    uid = pwd.getpwnam(user).pw_uid
+    gid = grp.getgrnam(group).gr_gid
+except KeyError as e:
+    print(f"User/group not found on system: {e}", file=sys.stderr)
+    sys.exit(1)
+
+# Write atomically
+try:
+    fd, tmp_path = tempfile.mkstemp(dir=deploy_dir, prefix=f'.{domain}.', suffix='.pem')
+    with os.fdopen(fd, 'w') as deploy, open(source_key, 'r') as key, open(source_chain, 'r') as chain:
+        deploy.write(key.read())
+        deploy.write(chain.read())
+    os.chmod(tmp_path, 0o600)
+    os.chown(tmp_path, uid, gid)
+    os.replace(tmp_path, deploy_path)
+except Exception as e:
+    print(f"Error deploying certificate: {e}", file=sys.stderr)
+    sys.exit(1)

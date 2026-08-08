@@ -23,6 +23,14 @@
     mode: '0644'
   notify: Restart haproxy
 
+- name: Deploy fixed certbot-haproxy-deploy script
+  ansible.builtin.copy:
+    src: certbot-haproxy-deploy.py
+    dest: /usr/bin/certbot-haproxy-deploy
+    mode: '0755'
+    owner: root
+    group: root
+
 - name: SystemD Letsencrypt Timer
   ansible.builtin.copy:
     dest: "/etc/systemd/system/letsencrypt.timer"
@@ -46,5 +54,29 @@
         Description=Renew Let's Encrypt Certificates
         [Service]
         Type=simple
-        User=certbot
-        ExecStart=/usr/bin/certbot renew -q --deploy-hook /usr/bin/certbot-haproxy-deploy
+        ExecStart=/usr/bin/certbot renew -q --deploy-hook /usr/bin/certbot-haproxy-deploy --post-hook 'systemctl reload haproxy'
+  notify: Reload systemd
+
+- name: Enable and start letsencrypt timer
+  ansible.builtin.systemd:
+    name: letsencrypt.timer
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+# letsencrypt.timer (above) is the single source of truth for renewals on
+# haproxy hosts: it runs certbot's own deploy-hook (cert install) and a
+# post-hook (haproxy reload). The distro-shipped certbot.timer and any
+# ad-hoc root crontab entry duplicate this without the reload step, so they
+# are disabled to avoid certs being renewed but never picked up by haproxy.
+- name: Disable distro-shipped certbot.timer (superseded by letsencrypt.timer)
+  ansible.builtin.systemd:
+    name: certbot.timer
+    enabled: no
+    state: stopped
+  failed_when: false
+
+- name: Remove any ad-hoc root crontab certbot renewal entry
+  ansible.builtin.cron:
+    name: "Certbot automatic renewal"
+    state: absent

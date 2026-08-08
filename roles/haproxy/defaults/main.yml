@@ -1,0 +1,5 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for spojenet/haproxy
+haproxy_certbot_create_missing: true
+haproxy_certbot_email: "{{ certbot_admin_email | default('') }}"

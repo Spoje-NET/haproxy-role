@@ -1,0 +1,8 @@
+- name: Haproxy
+  hosts: haproxy.spojenet.cz
+  become: true
+  become_method: ansible.builtin.sudo
+  vars_files:
+    - vars/haproxy.yml
+  roles:
+    - haproxy

@@ -1,7 +1,33 @@
-HAProxy Role
-============
+HAProxy Deployment
+==================
 
-This Ansible role is designed to install, configure, and manage HAProxy, a high-performance TCP/HTTP load balancer. It provides flexibility to define custom configurations and ensures HAProxy is set up optimally for your environment.
+This repository holds both the `spojenet.haproxy` Ansible role (`roles/haproxy/`) and a
+ready-to-run playbook (`playbook.yml`) that deploys/reconfigures `haproxy.spojenet.cz`. It is
+designed to be self-contained: cloning this repo and running the playbook is enough to manage
+that HAProxy instance, no other repo required.
+
+Production deployment runs automatically via Semaphore (semaphore.proxy.spojenet.cz): a push to
+the `main` branch triggers a webhook that re-runs `playbook.yml` against `haproxy.spojenet.cz`.
+
+Repository layout
+------------------
+
+```
+playbook.yml          # entry-point playbook (hosts: haproxy.spojenet.cz)
+vars/haproxy.yml       # haproxy_backend_servers, certbot_admin_email, nodes
+inventory/hosts        # static inventory for local/manual runs
+requirements.yml       # external galaxy role dependencies (geerlingguy.certbot)
+roles/haproxy/         # the spojenet.haproxy role itself
+```
+
+Local usage
+-----------
+
+```bash
+ansible-galaxy install -r requirements.yml
+ansible-playbook -i inventory/hosts playbook.yml
+# or: make haproxy
+```
 
 Requirements
 ------------

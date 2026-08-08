@@ -11,6 +11,50 @@
 - name: Include cleanup tasks
   ansible.builtin.include_tasks: cleanup.yml
 
+- name: Find certificates missing for configured HAProxy domains
+  ansible.builtin.set_fact:
+    missing_haproxy_certs: "{{ haproxy_domains | difference(certbot_data.certificates | map(attribute='name') | list) }}"
+
+- name: Debug missing certificates
+  ansible.builtin.debug:
+    msg: "Missing certificates: {{ missing_haproxy_certs }}"
+
+- name: Ensure certbot email is configured when creating missing certificates
+  ansible.builtin.assert:
+    that:
+      - haproxy_certbot_email | length > 0
+    fail_msg: "haproxy_certbot_email (or certbot_admin_email) must be set to create missing certificates."
+  when:
+    - haproxy_certbot_create_missing | bool
+    - missing_haproxy_certs | length > 0
+
+- name: Issue missing certificates with standalone certbot
+  block:
+    - name: Temporarily stop HAProxy while issuing missing certificates
+      ansible.builtin.service:
+        name: haproxy
+        state: stopped
+
+    - name: Create missing certificates
+      ansible.builtin.command: >
+        certbot certonly --standalone
+        --non-interactive --agree-tos
+        --email {{ haproxy_certbot_email }}
+        --deploy-hook /usr/bin/certbot-haproxy-deploy
+        -d {{ item }}
+      with_items: "{{ missing_haproxy_certs }}"
+      register: certbot_create_result
+      changed_when: true
+
+  always:
+    - name: Start HAProxy after issuing missing certificates
+      ansible.builtin.service:
+        name: haproxy
+        state: started
+
+  when:
+    - haproxy_certbot_create_missing | bool
+    - missing_haproxy_certs | length > 0
 
 - name: Find certificates to renew
   ansible.builtin.set_fact:

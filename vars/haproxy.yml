@@ -1,0 +1,55 @@
+---
+certbot_admin_email: vitezslav.dvorak@spojenet.cz
+
+nodes:
+  - haproxy.spojenet.cz
+  - node2: 213.151.89.80
+# *.proxy.spojenet.cz is CNAME to haproxy.spojenet.cz
+haproxy_backend_servers:
+  - name: jenkins.proxy.spojenet.cz
+    address: 10.11.56.151:8080
+    httpchk: /whoAmI/api/json
+    expect: 200
+    ssl: false
+  - name: portainer.proxy.spojenet.cz
+    address: 10.11.56.151:9443
+    ssl: true
+  - name: semaphore.proxy.spojenet.cz
+    address: 10.11.56.151:3000
+    ssl: false
+  - name: graylog.proxy.spojenet.cz
+    address: 10.11.0.249:9000
+    ssl: false
+  - name: aiolos.vitexsoftware.com
+    address: 10.11.56.223:8006
+    ssl: true
+  - name: vaultwarden-dev.proxy.spojenet.cz
+    address: 10.11.56.151:8888
+    ssl: false
+  - name: zabbix-dev.proxy.spojenet.cz
+    address: zabbix-dev.serverovna.brevnov.czf:80
+    ssl: false
+  - name: zabbix-dev.spojenet.cz
+    address: zabbix-dev.serverovna.brevnov.czf:80
+    ssl: false
+  - name: headlamp.proxy.spojenet.cz
+    address: 10.11.56.225:30167
+    ssl: false
+  - name: homeass.vitexsoftware.cz
+    address: 10.11.182.67:8123
+    ssl: false
+    forwardfor: false
+  - name: nas.animatrix.cz
+    address: 10.11.66.2:50080
+    ssl: false
+    forwardfor: false
+  - name: nodered-dev.spojenet.cz
+    address: 10.11.56.151:1880
+    httpchk: /node-red/
+    ssl: false
+  - name: grafana-dev.vitexsoftware.com
+    address: 10.11.56.226:3000
+    ssl: false
+  - name: mcprack-dev.spojenet.cz
+    address: vyvojar.spoje.net:8912
+    ssl: false

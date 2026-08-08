@@ -1,0 +1,37 @@
+---
+- name: Build list of expired HAProxy certificates
+  ansible.builtin.set_fact:
+    expired_haproxy_certs: >-
+      {{
+        certbot_data.certificates
+        | selectattr('name', 'in', haproxy_domains)
+        | selectattr('days_until_expiration', 'le', 0)
+        | map(attribute='name')
+        | list
+      }}
+
+- name: Debug expired certificates selected for forced renewal
+  ansible.builtin.debug:
+    msg: "Expired certificates to force-renew: {{ expired_haproxy_certs }}"
+
+- name: Force renew expired certificates
+  ansible.builtin.command: >
+    certbot renew --cert-name {{ item }}
+    --non-interactive --force-renewal --deploy-hook /usr/bin/certbot-haproxy-deploy
+  with_items: "{{ expired_haproxy_certs }}"
+  register: certbot_force_renew_result
+  changed_when: true
+  when: expired_haproxy_certs | length > 0
+
+- name: Debug forced renewal output
+  ansible.builtin.debug:
+    msg: "{{ certbot_force_renew_result.results | default([]) | map(attribute='stdout_lines') | flatten }}"
+
+- name: Restart HAProxy after certificate renewal
+  ansible.builtin.service:
+    name: haproxy
+    state: restarted
+  when:
+    - expired_haproxy_certs | length > 0
+    - certbot_force_renew_result is defined
+    - certbot_force_renew_result is changed

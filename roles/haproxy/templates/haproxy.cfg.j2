@@ -83,7 +83,9 @@ backend certbot
 backend {{ backend.name | replace('.', '_') }}
     mode http
     balance roundrobin
+    {% if backend.forwardfor | default(true) %}
     option forwardfor
+    {% endif %}
     {% if backend.httpchk is defined %}
     option httpchk GET {{ backend.httpchk }}
     http-check send meth GET uri {{ backend.httpchk }} ver HTTP/1.1 hdr Host {{ backend.name }}

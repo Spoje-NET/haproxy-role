@@ -1,4 +1,7 @@
 ---
+- set_fact:
+    haproxy_domains: "{{ haproxy_backend_servers | map(attribute='name') | list }}"
+
 
 # # 1. Installation and prerequisites
 # - name: Include installation tasks
