@@ -50,6 +50,9 @@ haproxy_backend_servers:
   - name: grafana-dev.vitexsoftware.com
     address: 10.11.56.226:3000
     ssl: false
+  - name: grafana-dev.spojenet.cz
+    address: 10.11.56.226:3000
+    ssl: false
   - name: mcprack-dev.spojenet.cz
     address: vyvojar.spoje.net:8912
     ssl: false
