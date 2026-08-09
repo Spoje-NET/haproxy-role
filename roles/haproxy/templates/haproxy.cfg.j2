@@ -40,6 +40,7 @@ frontend http
 frontend https
     bind *:443 ssl crt /etc/haproxy/ssl/__fallback.pem crt /etc/haproxy/ssl
     http-response set-header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    http-request set-header X-Forwarded-Proto https
 
     # Certbot verification
     acl is_certbot path_beg -i /.well-known/acme-challenge
