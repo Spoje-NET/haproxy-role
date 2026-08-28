@@ -28,30 +28,26 @@
     - haproxy_certbot_create_missing | bool
     - missing_haproxy_certs | length > 0
 
-- name: Issue missing certificates with standalone certbot
-  block:
-    - name: Temporarily stop HAProxy while issuing missing certificates
-      ansible.builtin.service:
-        name: haproxy
-        state: stopped
+- name: Ensure certbot-haproxy authenticator plugin is installed
+  ansible.builtin.package:
+    name: ['python3-zope.interface', 'certbot-haproxy']
+    state: present
+  when:
+    - haproxy_certbot_create_missing | bool
+    - missing_haproxy_certs | length > 0
 
-    - name: Create missing certificates
-      ansible.builtin.command: >
-        certbot certonly --standalone
-        --non-interactive --agree-tos
-        --email {{ haproxy_certbot_email }}
-        --deploy-hook /usr/bin/certbot-haproxy-deploy
-        -d {{ item }}
-      with_items: "{{ missing_haproxy_certs }}"
-      register: certbot_create_result
-      changed_when: true
-
-  always:
-    - name: Start HAProxy after issuing missing certificates
-      ansible.builtin.service:
-        name: haproxy
-        state: started
-
+- name: Create missing certificates
+  ansible.builtin.command: >
+    certbot certonly
+    --authenticator haproxy-authenticator
+    --haproxy-authenticator-haproxy-http-01-port {{ haproxy_certbot_http01_port }}
+    --non-interactive --agree-tos
+    --email {{ haproxy_certbot_email }}
+    --deploy-hook /usr/bin/certbot-haproxy-deploy
+    -d {{ item }}
+  with_items: "{{ missing_haproxy_certs }}"
+  register: certbot_create_result
+  changed_when: true
   when:
     - haproxy_certbot_create_missing | bool
     - missing_haproxy_certs | length > 0

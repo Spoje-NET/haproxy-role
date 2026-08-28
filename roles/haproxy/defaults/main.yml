@@ -3,3 +3,4 @@
 # defaults file for spojenet/haproxy
 haproxy_certbot_create_missing: true
 haproxy_certbot_email: "{{ certbot_admin_email | default('') }}"
+haproxy_certbot_http01_port: 8000
