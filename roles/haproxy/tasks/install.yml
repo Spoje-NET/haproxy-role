@@ -37,4 +37,4 @@
     state: present
     line: '<VirtualHost *:8080>'
     firstmatch: true
-  notify: Restart apache
+  notify: Restart Apache

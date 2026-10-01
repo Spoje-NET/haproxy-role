@@ -10,7 +10,7 @@
     name: haproxy
     state: restarted
 
-- name: Restart apache
+- name: Restart Apache
   ansible.builtin.service:
     name: apache2
     state: restarted
