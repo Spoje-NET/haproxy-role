@@ -17,7 +17,7 @@
 - name: Force renew expired certificates
   ansible.builtin.command: >
     certbot renew --cert-name {{ item }}
-    --non-interactive --force-renewal --deploy-hook /usr/bin/certbot-haproxy-deploy
+    --non-interactive --force-renewal --no-random-sleep-on-renew --deploy-hook /usr/bin/certbot-haproxy-deploy
   with_items: "{{ expired_haproxy_certs }}"
   register: certbot_force_renew_result
   changed_when: true
