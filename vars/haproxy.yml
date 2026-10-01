@@ -57,5 +57,5 @@ haproxy_backend_servers:
     address: vyvojar.spoje.net:8912
     ssl: false
   - name: vault.spojenet.cz
-    address: 10.11.25.175:8888
+    address: 10.11.25.174:8888
     ssl: false
