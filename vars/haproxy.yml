@@ -59,3 +59,9 @@ haproxy_backend_servers:
   - name: vault.spojenet.cz
     address: 10.11.25.174:8888
     ssl: false
+  - name: wazuh-dev.proxy.spojenet.cz
+    address: 10.11.56.151:5601
+    httpchk: /app/login
+    expect: 200
+    ssl: true
+
