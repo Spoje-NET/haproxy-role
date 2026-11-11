@@ -57,7 +57,11 @@ haproxy_backend_servers:
     address: 10.11.56.226:3000
     ssl: false
   - name: mcprack-dev.spojenet.cz
-    address: vyvojar.spoje.net:8912
+    # mcprack >= 1.6 binds loopback by default; vyvojar overrides GUNICORN_BIND
+    # to its internal address (eth1), not the public one
+    address: 10.11.56.151:8912
+    httpchk: /health
+    expect: 200
     ssl: false
   - name: vault.spojenet.cz
     address: 10.11.25.174:8888
